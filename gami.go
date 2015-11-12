@@ -310,6 +310,39 @@ func newEvent(data *textproto.MIMEHeader) (*AMIEvent, error) {
 }
 
 // Dial create a new connection to AMI
+func NewClient(conn io.ReadWriteCloser, options ...func(*AMIClient)) (*AMIClient, error) {
+	client := &AMIClient{
+		address:           "",
+		amiUser:           "",
+		amiPass:           "",
+		mutexAsyncAction:  new(sync.RWMutex),
+		waitNewConnection: make(chan struct{}),
+		response:          make(map[string]chan *AMIResponse),
+		responseMulti:     make(map[string]bool),
+		Events:            make(chan *AMIEvent, 100),
+		Error:             make(chan error, 1),
+		NetError:          make(chan error, 1),
+		connRaw: conn,
+	}
+
+	for _, op := range options {
+		op(client)
+	}
+
+	client.conn = textproto.NewConn(client.connRaw)
+	label, err := client.conn.ReadLine()
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.Contains(label, "Asterisk Call Manager") != true {
+		return nil, ErrNotAMI
+	}
+
+	return client, nil
+}
+
+// Dial create a new connection to AMI
 func Dial(address string, options ...func(*AMIClient)) (*AMIClient, error) {
 	client := &AMIClient{
 		address:           address,
