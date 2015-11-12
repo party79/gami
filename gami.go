@@ -279,19 +279,24 @@ func (client *AMIClient) Close() {
 func (client *AMIClient) notifyResponse(response *AMIResponse) {
 	go func() {
 		client.mutexAsyncAction.RLock()
-		client.response[response.ID] <- response
-		if !client.responseMulti[response.ID] {
-			close(client.response[response.ID])
-			delete(client.response, response.ID)
+		defer client.mutexAsyncAction.RUnlock()
+		if ch, ok := client.response[response.ID]; ok {
+			ch <- response
+			if b, ok := client.responseMulti[response.ID]; !ok || !b {
+				close(ch)
+				delete(client.response, response.ID)
+				delete(client.responseMulti, response.ID)
+			}
 		}
-		client.mutexAsyncAction.RUnlock()
 	}()
 }
 func (client *AMIClient) ClearResponse(response *AMIResponse) {
 	go func() {
-		close(client.response[response.ID])
-		delete(client.response, response.ID)
-		delete(client.responseMulti, response.ID)
+		if ch, ok := client.response[response.ID]; ok {
+			close(ch)
+			delete(client.response, response.ID)
+			delete(client.responseMulti, response.ID)
+		}
 	}()
 }
 
