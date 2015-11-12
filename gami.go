@@ -105,6 +105,7 @@ type AMIClient struct {
 	waitNewConnection chan struct{}
 
 	response map[string]chan *AMIResponse
+	responseMulti  map[string]bool
 
 	// Events for client parse
 	Events chan *AMIEvent
@@ -211,6 +212,14 @@ func (client *AMIClient) AsyncAction(action string, params Params) (<-chan *AMIR
 
 	return client.response[params["ActionID"]], nil
 }
+func (client *AMIClient) AsyncActionMulti(action string, params Params) (<-chan *AMIResponse, error) {
+	resp, err := client.AsyncAction(action, params)
+	if err != nil {
+		return nil, err
+	}
+	client.responseMulti[params["ActionID"]] = true
+	return resp, nil
+}
 
 // Action send with params
 func (client *AMIClient) Action(action string, params Params) (*AMIResponse, error) {
@@ -271,9 +280,18 @@ func (client *AMIClient) notifyResponse(response *AMIResponse) {
 	go func() {
 		client.mutexAsyncAction.RLock()
 		client.response[response.ID] <- response
+		if !client.responseMulti[response.ID] {
+			close(client.response[response.ID])
+			delete(client.response, response.ID)
+		}
+		client.mutexAsyncAction.RUnlock()
+	}()
+}
+func (client *AMIClient) ClearResponse(response *AMIResponse) {
+	go func() {
 		close(client.response[response.ID])
 		delete(client.response, response.ID)
-		client.mutexAsyncAction.RUnlock()
+		delete(client.responseMulti, response.ID)
 	}()
 }
 
