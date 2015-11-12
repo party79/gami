@@ -302,7 +302,7 @@ func (client *AMIClient) ClearResponse(response *AMIResponse) {
 
 //newResponse build a response for action
 func newResponse(data *textproto.MIMEHeader) (*AMIResponse, error) {
-	if data.Get("Response") == "" {
+	if data.Get("Response") == "" && data.Get("Actionid") == "" {
 		return nil, errors.New("Not Response")
 	}
 	response := &AMIResponse{"", "", make(map[string]string)}
@@ -319,7 +319,7 @@ func newResponse(data *textproto.MIMEHeader) (*AMIResponse, error) {
 
 //newEvent build event
 func newEvent(data *textproto.MIMEHeader) (*AMIEvent, error) {
-	if data.Get("Event") == "" {
+	if data.Get("Event") == "" || data.Get("Actionid") != "" {
 		return nil, errNotEvent
 	}
 	ev := &AMIEvent{data.Get("Event"), strings.Split(data.Get("Privilege"), ","), make(map[string]string)}
