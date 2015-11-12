@@ -345,7 +345,7 @@ func NewClient(conn io.ReadWriteCloser, options ...func(*AMIClient)) (*AMIClient
 		Events:            make(chan *AMIEvent, 100),
 		Error:             make(chan error, 1),
 		NetError:          make(chan error, 1),
-		connRaw: conn,
+		connRaw:           conn,
 	}
 
 	for _, op := range options {
