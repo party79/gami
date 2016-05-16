@@ -104,8 +104,8 @@ type AMIClient struct {
 	// network wait for a new connection
 	waitNewConnection chan struct{}
 
-	response map[string]chan *AMIResponse
-	responseMulti  map[string]bool
+	response      map[string]chan *AMIResponse
+	responseMulti map[string]bool
 
 	// Events for client parse
 	Events chan *AMIEvent
@@ -187,11 +187,8 @@ func (client *AMIClient) Reconnect() error {
 
 // AsyncAction return chan for wait response of action with parameter *ActionID* this can be helpful for
 // massive actions,
-func (client *AMIClient) AsyncAction(action string, params Params) (<-chan *AMIResponse, error) {
+func (client *AMIClient) doAsyncAction(action string, params Params) (<-chan *AMIResponse, error) {
 	var output string
-	client.mutexAsyncAction.Lock()
-	defer client.mutexAsyncAction.Unlock()
-
 	output = fmt.Sprintf("Action: %s\r\n", strings.TrimSpace(action))
 	if params == nil {
 		params = Params{}
@@ -212,12 +209,19 @@ func (client *AMIClient) AsyncAction(action string, params Params) (<-chan *AMIR
 
 	return client.response[params["ActionID"]], nil
 }
+func (client *AMIClient) AsyncAction(action string, params Params) (<-chan *AMIResponse, error) {
+	client.mutexAsyncAction.Lock()
+	defer client.mutexAsyncAction.Unlock()
+	return client.doAsyncAction(action, params)
+}
 func (client *AMIClient) AsyncActionMulti(action string, params Params) (<-chan *AMIResponse, error) {
-	resp, err := client.AsyncAction(action, params)
+	client.mutexAsyncAction.Lock()
+	defer client.mutexAsyncAction.Unlock()
+	resp, err := client.doAsyncAction(action, params)
+	client.responseMulti[params["ActionID"]] = true
 	if err != nil {
 		return nil, err
 	}
-	client.responseMulti[params["ActionID"]] = true
 	return resp, nil
 }
 
