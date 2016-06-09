@@ -187,7 +187,7 @@ func (client *AMIClient) Reconnect() error {
 
 // AsyncAction return chan for wait response of action with parameter *ActionID* this can be helpful for
 // massive actions,
-func (client *AMIClient) doAsyncAction(action string, params Params) (<-chan *AMIResponse, error) {
+func (client *AMIClient) doAsyncAction(action string, params Params) (chan *AMIResponse, error) {
 	var output string
 	output = fmt.Sprintf("Action: %s\r\n", strings.TrimSpace(action))
 	if params == nil {
@@ -214,7 +214,7 @@ func (client *AMIClient) AsyncAction(action string, params Params) (<-chan *AMIR
 	defer client.mutexAsyncAction.Unlock()
 	return client.doAsyncAction(action, params)
 }
-func (client *AMIClient) AsyncActionMulti(action string, params Params) (<-chan *AMIResponse, error) {
+func (client *AMIClient) AsyncActionMulti(action string, params Params) (chan *AMIResponse, error) {
 	client.mutexAsyncAction.Lock()
 	defer client.mutexAsyncAction.Unlock()
 	resp, err := client.doAsyncAction(action, params)
