@@ -287,9 +287,7 @@ func (client *AMIClient) notifyResponse(response *AMIResponse) {
 		if ch, ok := client.response[response.ID]; ok {
 			ch <- response
 			if b, ok := client.responseMulti[response.ID]; !ok || !b {
-				delete(client.response, response.ID)
-				delete(client.responseMulti, response.ID)
-				close(ch)
+				go client.ClearResponse(response)
 			}
 		}
 	}()
