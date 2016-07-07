@@ -187,47 +187,53 @@ func (client *AMIClient) Reconnect() error {
 
 // AsyncAction return chan for wait response of action with parameter *ActionID* this can be helpful for
 // massive actions,
-func (client *AMIClient) doAsyncAction(action string, params Params) (chan *AMIResponse, error) {
+func (client *AMIClient) doAsyncAction(action string, params Params, multi bool) (chan *AMIResponse, error) {
+	client.mutexAsyncAction.Lock()
+	defer client.mutexAsyncAction.Unlock()
+
 	var output string
 	output = fmt.Sprintf("Action: %s\r\n", strings.TrimSpace(action))
+
 	if params == nil {
 		params = Params{}
 	}
 	if _, ok := params["ActionID"]; !ok {
 		params["ActionID"] = responseChanGamiID + "_" + fmt.Sprintf("%d", rand.Intn(1000000))
 	}
+	id := params["ActionID"]
 
-	if _, ok := client.response[params["ActionID"]]; !ok {
-		client.response[params["ActionID"]] = make(chan *AMIResponse, 1)
+	var ch chan *AMIResponse
+	if v, ok := client.response[id]; ok {
+		ch = v
+	} else {
+		ch = make(chan *AMIResponse, 100)
+		client.response[id] = ch
+	}
+	if multi {
+		client.responseMulti[id] = true
 	}
 	for k, v := range params {
 		output = output + fmt.Sprintf("%s: %s\r\n", k, strings.TrimSpace(v))
 	}
 	if err := client.conn.PrintfLine("%s", output); err != nil {
+		delete(client.response, id)
+		delete(client.responseMulti, id)
+		close(ch)
 		return nil, err
 	}
 
-	return client.response[params["ActionID"]], nil
+	return ch, nil
 }
 func (client *AMIClient) AsyncAction(action string, params Params) (<-chan *AMIResponse, error) {
-	client.mutexAsyncAction.Lock()
-	defer client.mutexAsyncAction.Unlock()
-	return client.doAsyncAction(action, params)
+	return client.doAsyncAction(action, params, false)
 }
 func (client *AMIClient) AsyncActionMulti(action string, params Params) (chan *AMIResponse, error) {
-	client.mutexAsyncAction.Lock()
-	defer client.mutexAsyncAction.Unlock()
-	resp, err := client.doAsyncAction(action, params)
-	client.responseMulti[params["ActionID"]] = true
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
+	return client.doAsyncAction(action, params, true)
 }
 
 // Action send with params
 func (client *AMIClient) Action(action string, params Params) (*AMIResponse, error) {
-	resp, err := client.AsyncAction(action, params)
+	resp, err := client.doAsyncAction(action, params, false)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +293,7 @@ func (client *AMIClient) notifyResponse(response *AMIResponse) {
 		if ch, ok := client.response[response.ID]; ok {
 			ch <- response
 			if b, ok := client.responseMulti[response.ID]; !ok || !b {
-				go client.ClearResponse(response)
+				client.ClearResponse(response)
 			}
 		}
 	}()
