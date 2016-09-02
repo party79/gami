@@ -1,4 +1,4 @@
-// Package gami provites primitives for interacting with Asterisk AMI
+// Package gami provites primitives for interacting with Asterisk Manager Interface (AMI)
 /*
 
 Basic Usage

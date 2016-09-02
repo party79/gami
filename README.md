@@ -1,9 +1,15 @@
 GAMI
 ====
 
-GO - Asterisk AMI Interface
+This project is the source for http://godoc.org/
 
-communicate with the  Asterisk AMI, Actions and Events.
+[![GoDoc](https://godoc.org/github.com/party79/gami?status.svg)](http://godoc.org/github.com/party79/gami)
+
+GO - Asterisk Manager Interface (AMI)
+
+communicate with the AMI, Actions and Events.
+
+###BASIC USAGE
 
 Example connecting to Asterisk and Send Action get Events.
 
@@ -69,6 +75,7 @@ func main() {
 ###TLS SUPPORT
 
 In order to use TLS connection to manager interface you could `Dial` with additional parameters
+
 ``` go
 //without TLS
 ami, err := gami.Dial("127.0.0.1:5038")
@@ -82,11 +89,14 @@ ami, err := gami.Dial("127.0.0.1:5039", gami.UseTLS, gami.UnsecureTLS)
 //if custom tls configuration
 ami, err := gami.Dial("127.0.0.1:5039", gami.UseTLSConfig(&tls.Config{}))
 ```
+
 **WARNING:**
 *Only Asterisk >=1.6 supports TLS connection to AMI and
-it needs additional configuration(follow the [Asterisk AMI configuration](http://www.asteriskdocs.org/en/3rd_Edition/asterisk-book-html-chunk/AMI-configuration.html) documentation)*
+it needs additional configuration(follow the [AMI configuration](http://www.asteriskdocs.org/en/3rd_Edition/asterisk-book-html-chunk/AMI-configuration.html) documentation)*
 
 ###CUSTOM CONNECTION
+
+Example connecting to Asterisk with a basic connection, you would use this with your own io.ReadWriteCloser
 
 ``` go
 package main
@@ -112,7 +122,6 @@ func main() {
 	//do something
 }
 ```
-
 
 CURRENT EVENT TYPES
 ====
