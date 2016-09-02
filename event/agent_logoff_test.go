@@ -3,7 +3,7 @@ package event
 import (
 	"testing"
 
-	"github.com/bit4bit/gami"
+	"github.com/party79/gami"
 )
 
 func TestAgentLogoff(t *testing.T) {

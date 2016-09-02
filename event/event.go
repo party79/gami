@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/bit4bit/gami"
+	"github.com/party79/gami"
 )
 
 // eventTrap used internal for trap events and cast

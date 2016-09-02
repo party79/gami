@@ -11,8 +11,8 @@ Example connecting to Asterisk and Send Action get Events.
 package main
 import (
 	"log"
-	"github.com/bit4bit/gami"
-	"github.com/bit4bit/gami/event"
+	"github.com/party79/gami"
+	"github.com/party79/gami/event"
 )
 
 func main() {
@@ -95,7 +95,7 @@ CURRENT EVENT TYPES
 
 The events use documentation and struct from *PAMI*.
 
-use **bit4bit/gami/event.New()** for get this struct from raw event
+use **party79/gami/event.New()** for get this struct from raw event
 
 EVENT ID          | TYPE TEST  
 ----------------  | ---------- 

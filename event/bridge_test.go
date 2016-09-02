@@ -4,7 +4,7 @@ package event
 import (
 	"testing"
 
-	"github.com/bit4bit/gami"
+	"github.com/party79/gami"
 )
 
 func TestBridge(t *testing.T) {
