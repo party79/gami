@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // Newexten triggered when a new extension is accessed.
@@ -14,5 +13,5 @@ type Newexten struct {
 }
 
 func init() {
-	eventTrap["Newexten"] = Newexten{}
+	RegisterEvent((*Newexten)(nil), "Newexten")
 }

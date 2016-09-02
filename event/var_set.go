@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // VarSet triggered when a variable is set via agi or dialplan.
@@ -11,5 +10,5 @@ type VarSet struct {
 }
 
 func init() {
-	eventTrap["VarSet"] = VarSet{}
+	RegisterEvent((*VarSet)(nil), "VarSet")
 }

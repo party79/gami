@@ -20,7 +20,7 @@ func TestAgentLogin(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(AgentLogin); !ok {
+	if _, ok := evtype.(*AgentLogin); !ok {
 		t.Fatal("AgentLogin type assertion")
 	}
 

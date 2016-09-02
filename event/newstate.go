@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // Newstate triggered when a channel changes its status.
@@ -15,5 +14,5 @@ type Newstate struct {
 }
 
 func init() {
-	eventTrap["Newstate"] = Newstate{}
+	RegisterEvent((*Newstate)(nil), "Newstate")
 }

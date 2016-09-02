@@ -25,7 +25,7 @@ func TestNewstateEvent(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(Newstate); !ok {
+	if _, ok := evtype.(*Newstate); !ok {
 		t.Log("Newstate type assertion")
 		t.Fail()
 	}

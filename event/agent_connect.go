@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // AgentConnect triggered when an agent connects.
@@ -15,5 +14,5 @@ type AgentConnect struct {
 }
 
 func init() {
-	eventTrap["AgentConnect"] = AgentConnect{}
+	RegisterEvent((*AgentConnect)(nil), "AgentConnect")
 }

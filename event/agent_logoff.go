@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // AgentLogoff triggered when an agent logs off.
@@ -10,5 +9,5 @@ type AgentLogoff struct {
 }
 
 func init() {
-	eventTrap["AgentLogoff"] = AgentLogoff{}
+	RegisterEvent((*AgentLogoff)(nil), "AgentLogoff")
 }

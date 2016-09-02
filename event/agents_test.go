@@ -24,7 +24,7 @@ func TestAgentsEvent(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(Agents); !ok {
+	if _, ok := evtype.(*Agents); !ok {
 		t.Fatal("Agents type assertion")
 	}
 	testEvent(t, fixture, evtype)

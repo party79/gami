@@ -26,7 +26,7 @@ func TestDialEvent(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(Dial); !ok {
+	if _, ok := evtype.(*Dial); !ok {
 		t.Log("Dial type assertion")
 		t.Fail()
 	}

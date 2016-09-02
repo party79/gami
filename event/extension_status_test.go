@@ -22,7 +22,7 @@ func TestExtensionStatus(t *testing.T) {
 
 	evtype := New(&ev)
 
-	if _, ok := evtype.(ExtensionStatus); !ok {
+	if _, ok := evtype.(*ExtensionStatus); !ok {
 		t.Fatal("ExtensionStatus type assertion")
 	}
 

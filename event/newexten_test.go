@@ -22,7 +22,7 @@ func TestNewexten(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(Newexten); !ok {
+	if _, ok := evtype.(*Newexten); !ok {
 		t.Fatal("Newexten type assertion")
 	}
 

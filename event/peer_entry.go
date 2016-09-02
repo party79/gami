@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // PeerEntry triggered for each peer when an action Sippeers is issued.
@@ -20,5 +19,5 @@ type PeerEntry struct {
 
 func init() {
 	//Register ID Event for cast when detect
-	eventTrap["PeerEntry"] = PeerEntry{}
+	RegisterEvent((*PeerEntry)(nil), "PeerEntry")
 }

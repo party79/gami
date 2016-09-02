@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // PeerStatus trigger when a peers change status
@@ -11,5 +10,5 @@ type PeerStatus struct {
 
 func init() {
 	//Register ID Event for cast when detect
-	eventTrap["PeerStatus"] = PeerStatus{}
+	RegisterEvent((*PeerStatus)(nil), "PeerStatus")
 }

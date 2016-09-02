@@ -25,7 +25,7 @@ func TestAgentConnect(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(AgentConnect); !ok {
+	if _, ok := evtype.(*AgentConnect); !ok {
 		t.Fatal("AgentConnect type assertion")
 	}
 

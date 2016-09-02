@@ -26,7 +26,7 @@ func TestNewchannel(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(Newchannel); !ok {
+	if _, ok := evtype.(*Newchannel); !ok {
 		t.Fatal("Newchannel type assertion")
 	}
 

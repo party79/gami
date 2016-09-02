@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // Newchannel triggered when a new channel is created.
@@ -16,5 +15,5 @@ type Newchannel struct {
 }
 
 func init() {
-	eventTrap["Newchannel"] = Newchannel{}
+	RegisterEvent((*Newchannel)(nil), "Newchannel")
 }

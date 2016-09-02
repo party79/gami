@@ -23,7 +23,7 @@ func TestRTPReceiverStats(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(RTPReceiverStats); !ok {
+	if _, ok := evtype.(*RTPReceiverStats); !ok {
 		t.Fatal("PeerStatus type assertion")
 	}
 
