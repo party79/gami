@@ -7,10 +7,12 @@ communicate with the  Asterisk AMI, Actions and Events.
 
 Example connecting to Asterisk and Send Action get Events.
 
-```go
+``` go
 package main
+
 import (
 	"log"
+
 	"github.com/bit4bit/gami"
 	"github.com/bit4bit/gami/event"
 )
@@ -18,9 +20,11 @@ import (
 func main() {
 	ami, err := gami.Dial("127.0.0.1:5038")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Print(err)
+		os.Exit(1)
 	}
-	
+	ami.Run()
+	defer ami.Close()
 	//install manager
 	go func() {
 		for {
@@ -34,7 +38,6 @@ func main() {
 					//call start actions
 					ami.Action("Events", gami.Params{"EventMask": "on"})
 				}
-				
 			case err := <-ami.Error:
 				log.Println("error:", err)
 			//wait events and process
@@ -45,35 +48,28 @@ func main() {
 			}
 		}
 	}()
-	
 	if err := ami.Login("admin", "root"); err != nil {
 		log.Fatal(err)
 	}
-	
-	
-	if rs, err = ami.Action("Ping", nil); err != nil {
+	if rs, err = ami.Action("Ping", nil); err == nil {
 		log.Fatal(rs)
 	}
-	
-	//async actions
-	rsPing, rsErr := ami.AsyncAction("Ping", gami.Params{"ActionID": "pingo"})
-	if rsErr != nil {
-		log.Fatal(rsErr)
+	//or with can do async
+	pingResp, pingErr := ami.AsyncAction("Ping", gami.Params{"ActionID": "miping"})
+	if pingErr != nil {
+		log.Fatal(pingErr)
 	}
-						
 	if rs, err = ami.Action("Events", ami.Params{"EventMask":"on"}); err != nil {
-		log.Fatal(err)
+		fmt.Print(err)
 	}
-	
-	log.Println("ping:", <-rsPing)
-	
-	ami.Close()
+	log.Println("future ping:", <-pingResp)
 }
 ```
 
 ###TLS SUPPORT
+
 In order to use TLS connection to manager interface you could `Dial` with additional parameters
-```go
+``` go
 //without TLS
 ami, err := gami.Dial("127.0.0.1:5038")
 
@@ -90,6 +86,34 @@ ami, err := gami.Dial("127.0.0.1:5039", gami.UseTLSConfig(&tls.Config{}))
 *Only Asterisk >=1.6 supports TLS connection to AMI and
 it needs additional configuration(follow the [Asterisk AMI configuration](http://www.asteriskdocs.org/en/3rd_Edition/asterisk-book-html-chunk/AMI-configuration.html) documentation)*
 
+###CUSTOM CONNECTION
+
+``` go
+package main
+
+import (
+	"log"
+	"net"
+
+	"github.com/bit4bit/gami"
+)
+
+func main() {
+	c, err := net.Dial("tcp", "127.0.0.1:5038")
+	if err != nil {
+		log.Fatal(err)
+	}
+	ami, err := gami.NewClient(c)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ami.Run()
+	defer ami.Close()
+	//do something
+}
+```
+
+
 CURRENT EVENT TYPES
 ====
 
@@ -97,21 +121,21 @@ The events use documentation and struct from *PAMI*.
 
 use **bit4bit/gami/event.New()** for get this struct from raw event
 
-EVENT ID          | TYPE TEST  
-----------------  | ---------- 
-*Newchannel*      | YES
-*Newexten*        | YES
-*Newstate*        | YES 
-*Dial*            | YES 
-*ExtensionStatus* | YES 
-*Hangup*          | YES 
-*PeerStatus*      | YES
-*PeerEntry*	      | YES
-*VarSet*          | YES 
-*AgentLogin*      | YES
-*Agents*          | YES
-*AgentLogoff*     | YES
-*AgentConnect*    | YES
+EVENT ID           | TYPE TEST  
+------------------ | ---------- 
+*Newchannel*       | YES
+*Newexten*         | YES
+*Newstate*         | YES 
+*Dial*             | YES 
+*ExtensionStatus*  | YES 
+*Hangup*           | YES 
+*PeerStatus*       | YES
+*PeerEntry*	       | YES
+*VarSet*           | YES 
+*AgentLogin*       | YES
+*Agents*           | YES
+*AgentLogoff*      | YES
+*AgentConnect*     | YES
 *RTPReceiverStats* | YES
-*RTPSenderStats* | YES
-*Bridge* | YES
+*RTPSenderStats*   | YES
+*Bridge*           | YES
