@@ -22,7 +22,7 @@ func TestHangupEvent(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(Hangup); !ok {
+	if _, ok := evtype.(*Hangup); !ok {
 		t.Log("Hangup type assertion")
 		t.Fail()
 	}

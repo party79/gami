@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 type Bridge struct {
@@ -14,5 +13,5 @@ type Bridge struct {
 }
 
 func init() {
-	eventTrap["Bridge"] = Bridge{}
+	RegisterEvent((*Bridge)(nil), "Bridge")
 }

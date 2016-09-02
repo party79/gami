@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 import (
@@ -26,7 +25,7 @@ func TestBridge(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(Bridge); !ok {
+	if _, ok := evtype.(*Bridge); !ok {
 		t.Fatal("Bridge type assertion")
 	}
 

@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // Dial triggered when a dial is executed.
@@ -16,5 +15,5 @@ type Dial struct {
 }
 
 func init() {
-	eventTrap["Dial"] = Dial{}
+	RegisterEvent((*Dial)(nil), "Dial")
 }

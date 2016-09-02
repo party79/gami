@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // Hangup triggered when a hangup is detected.
@@ -13,5 +12,5 @@ type Hangup struct {
 }
 
 func init() {
-	eventTrap["Hangup"] = Hangup{}
+	RegisterEvent((*Hangup)(nil), "Hangup")
 }

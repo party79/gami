@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // RTPSenderStats triggered when exchanging rtp stats.
@@ -13,5 +12,5 @@ type RTPSenderStats struct {
 }
 
 func init() {
-	eventTrap["RTPSenderStats"] = RTPSenderStats{}
+	RegisterEvent((*RTPSenderStats)(nil), "RTPSenderStats")
 }

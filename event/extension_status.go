@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // ExtensionStatus triggered when an extension changes its status.
@@ -11,5 +10,5 @@ type ExtensionStatus struct {
 }
 
 func init() {
-	eventTrap["ExtensionStatus"] = ExtensionStatus{}
+	RegisterEvent((*ExtensionStatus)(nil), "ExtensionStatus")
 }

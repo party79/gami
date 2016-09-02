@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 //Agents trigger for agents
@@ -14,5 +13,5 @@ type Agents struct {
 }
 
 func init() {
-	eventTrap["Agents"] = Agents{}
+	RegisterEvent((*Agents)(nil), "Agents")
 }

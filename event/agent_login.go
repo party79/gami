@@ -1,4 +1,3 @@
-// Package event for AMI
 package event
 
 // AgentLogin trigger when agent logs in
@@ -10,5 +9,5 @@ type AgentLogin struct {
 }
 
 func init() {
-	eventTrap["AgentLogin"] = AgentLogin{}
+	RegisterEvent((*AgentLogin)(nil), "AgentLogin")
 }

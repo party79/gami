@@ -21,7 +21,7 @@ func TestVarSetEvent(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(VarSet); !ok {
+	if _, ok := evtype.(*VarSet); !ok {
 		t.Log("VarSet type assertion")
 		t.Fail()
 	}

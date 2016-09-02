@@ -20,7 +20,7 @@ func TestAgentLogoff(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(AgentLogoff); !ok {
+	if _, ok := evtype.(*AgentLogoff); !ok {
 		t.Fatal("AgentLogoff type assertion")
 	}
 

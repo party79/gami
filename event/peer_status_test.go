@@ -20,7 +20,7 @@ func TestPeerStatus(t *testing.T) {
 	}
 
 	evtype := New(&ev)
-	if _, ok := evtype.(PeerStatus); !ok {
+	if _, ok := evtype.(*PeerStatus); !ok {
 		t.Fatal("PeerStatus type assertion")
 	}
 
