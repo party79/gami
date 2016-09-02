@@ -9,6 +9,9 @@ import (
 func testEvent(t *testing.T, fixture map[string]string, evtype interface{}) {
 	value := reflect.ValueOf(evtype)
 	if value.Kind() == reflect.Ptr {
+		if value.IsNil() {
+			t.Fatal("Data is nil")
+		}
 		value = value.Elem()
 	}
 	typ := value.Type()
@@ -33,7 +36,7 @@ func findField(value reflect.Value, typ reflect.Type, k string, v string) (refle
 	for ix := 0; ix < value.NumField(); ix++ {
 		field := value.Field(ix)
 		tfield := typ.Field(ix)
-		if tfield.Tag.Get("AMI") == k {
+		if tfield.Tag.Get("AMI") == k && field.String() == v {
 			return field, tfield
 		}
 	}
