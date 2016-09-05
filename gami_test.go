@@ -29,7 +29,10 @@ func TestLogin(t *testing.T) {
 	}
 	go ami.Run()
 	defer ami.Close()
-	defaultInstaller(t, ami)
+	closech := defaultInstaller(t, ami)
+	defer func() {
+		closech <- true
+	}()
 
 	//example mocking login of asterisk
 	srv.Mock("Login", func(params textproto.MIMEHeader) map[string]string {
@@ -50,7 +53,10 @@ func TestMultiAsyncActions(t *testing.T) {
 	}
 	go ami.Run()
 	defer ami.Close()
-	defaultInstaller(t, ami)
+	closech := defaultInstaller(t, ami)
+	defer func() {
+		closech <- true
+	}()
 
 	tests := 10
 	workers := 5
@@ -86,7 +92,8 @@ func TestMultiAsyncActions(t *testing.T) {
 
 }
 
-func defaultInstaller(t *testing.T, ami *AMIClient) {
+func defaultInstaller(t *testing.T, ami *AMIClient) chan bool {
+	var closech chan bool = make(chan bool, 1)
 	go func() {
 		for {
 			select {
@@ -98,9 +105,12 @@ func defaultInstaller(t *testing.T, ami *AMIClient) {
 			//wait events and process
 			case <-ami.Events:
 				//t.Log("Event:", *ev)
+			case <-closech:
+				return
 			}
 		}
 	}()
+	return closech
 }
 
 func newAmiServer() *amiServer {
