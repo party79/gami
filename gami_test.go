@@ -24,10 +24,10 @@ func TestLogin(t *testing.T) {
 	}()
 
 	//example mocking login of asterisk
-	srv.Mock("Login", func(params textproto.MIMEHeader) map[string]string {
-		return map[string]string{
-			"Response": "OK",
-			"ActionID": params.Get("Actionid"),
+	srv.Mock("Login", func(params textproto.MIMEHeader) textproto.MIMEHeader {
+		return textproto.MIMEHeader{
+			"Response": {"OK"},
+			"ActionID": {params.Get("Actionid")},
 		}
 	})
 	ami.Login("admin", "admin")
