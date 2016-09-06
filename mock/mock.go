@@ -15,7 +15,7 @@ import (
 	"github.com/NorgannasAddOns/go-uuid"
 )
 
-type AmiMockAction func(params textproto.MIMEHeader) textproto.MIMEHeader
+type AmiMockAction func(conn *AmiConn, params textproto.MIMEHeader) textproto.MIMEHeader
 
 //AmiConn for mocking Asterisk AMI
 type AmiConn struct {
@@ -93,7 +93,7 @@ func (conn *AmiConn) doReader() {
 				"ActionID": {packet.Get("Actionid")},
 			}
 		} else if cb, ok := conn.srv.getMock(action); ok {
-			conn.messageCh <- cb(packet)
+			conn.messageCh <- cb(conn, packet)
 		} else {
 			conn.messageCh <- textproto.MIMEHeader{
 				"Response": {"TEST"},
@@ -227,11 +227,15 @@ func (c *AmiServer) do(listener net.Listener) {
 	}
 }
 
-func (c *AmiServer) Close() {
+func (c *AmiServer) CloseCons() {
 	c.Lock()
 	defer c.Unlock()
 	for _, conn := range c.conns {
 		conn.Close()
 	}
+	c.conns = make([]*AmiConn, 0)
+}
+func (c *AmiServer) Close() {
+	c.CloseCons()
 	c.listener.Close()
 }
