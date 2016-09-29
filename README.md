@@ -1,8 +1,6 @@
 GAMI
 ====
 
-This project is the source for http://godoc.org/
-
 [![GoDoc](https://godoc.org/github.com/bit4bit/gami?status.svg)](http://godoc.org/github.com/bit4bit/gami)
 
 GO - Asterisk Manager Interface (AMI)
