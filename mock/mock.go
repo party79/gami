@@ -1,7 +1,6 @@
 package amimock
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/NorgannasAddOns/go-uuid"
+	"golang.org/x/net/context"
 )
 
 type AmiMockAction func(conn *AmiConn, params textproto.MIMEHeader) textproto.MIMEHeader
@@ -28,9 +28,14 @@ type AmiConn struct {
 	conn      *textproto.Conn
 }
 
-func NewAmiConn(ctx context.Context, cancel context.CancelFunc, conn io.ReadWriteCloser, c *AmiServer) *AmiConn {
+func NewAmiConn(ctx context.Context, conn io.ReadWriteCloser, c *AmiServer) *AmiConn {
+	var (
+		sctx   context.Context
+		cancel context.CancelFunc
+	)
+	sctx, cancel = context.WithCancel(ctx)
 	amic := &AmiConn{
-		Context:   ctx,
+		Context:   sctx,
 		cancel:    cancel,
 		uuid:      uuid.New("C"),
 		srv:       c,
@@ -41,18 +46,28 @@ func NewAmiConn(ctx context.Context, cancel context.CancelFunc, conn io.ReadWrit
 	go amic.doHeartBeat()
 	go amic.doReader()
 	go amic.doWriter()
+	go func(amic *AmiConn) {
+		<-amic.Done()
+		amic.Close()
+	}(amic)
 	amic.conn.PrintfLine("Asterisk Call Manager")
 	return amic
 }
 
 //Emit: emits packet to connection
 func (conn *AmiConn) Emit(packet textproto.MIMEHeader) {
+	if conn.conn == nil {
+		return
+	}
 	conn.messageCh <- packet
 }
 
 func (conn *AmiConn) Close() {
-	close(conn.messageCh)
+	if conn.conn == nil {
+		return
+	}
 	conn.conn = nil
+	close(conn.messageCh)
 	conn.connRaw.Close()
 	conn.cancel()
 }
@@ -131,6 +146,8 @@ func (conn *AmiConn) doWriter() {
 //AmiServer for mocking Asterisk AMI
 type AmiServer struct {
 	sync.RWMutex
+	context.Context
+	cancel        context.CancelFunc
 	Addr          string
 	actionsMocked map[string]AmiMockAction
 	listener      net.Listener
@@ -138,19 +155,30 @@ type AmiServer struct {
 }
 
 //NewAmiServer: Creats an ami mock server
-func NewAmiServer() *AmiServer {
+func NewAmiServer(ctx context.Context) *AmiServer {
 	addr := "localhost:0"
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		panic(err)
 	}
+	var (
+		sctx   context.Context
+		cancel context.CancelFunc
+	)
+	sctx, cancel = context.WithCancel(ctx)
 	srv := &AmiServer{
+		Context:       sctx,
+		cancel:        cancel,
 		Addr:          listener.Addr().String(),
 		listener:      listener,
 		actionsMocked: make(map[string]AmiMockAction),
 		conns:         make([]*AmiConn, 0),
 	}
-	go srv.do(listener)
+	go srv.do()
+	go func(srv *AmiServer) {
+		<-srv.Done()
+		srv.Close()
+	}(srv)
 	return srv
 }
 
@@ -195,24 +223,20 @@ func (c *AmiServer) getMock(action string) (AmiMockAction, bool) {
 	return nil, false
 }
 
-func (c *AmiServer) do(listener net.Listener) {
+func (c *AmiServer) do() {
 	for {
-		conn, err := listener.Accept()
+		conn, err := c.listener.Accept()
 		if err != nil {
+			c.cancel()
 			return
 		}
-		func(conn net.Conn) {
-			var (
-				ctx    context.Context
-				cancel context.CancelFunc
-			)
-			ctx, cancel = context.WithCancel(context.Background())
-			amic := NewAmiConn(ctx, cancel, conn, c)
+		go func(c *AmiServer, conn net.Conn) {
+			amic := NewAmiConn(c.Context, conn, c)
 			c.Lock()
 			defer c.Unlock()
 			c.conns = append(c.conns, amic)
-			go func(amic *AmiConn) {
-				_, _ = <-amic.Done()
+			go func(c *AmiServer, amic *AmiConn) {
+				<-amic.Done()
 				c.Lock()
 				defer c.Unlock()
 				repl := make([]*AmiConn, 0)
@@ -222,8 +246,8 @@ func (c *AmiServer) do(listener net.Listener) {
 					}
 				}
 				c.conns = repl
-			}(amic)
-		}(conn)
+			}(c, amic)
+		}(c, conn)
 	}
 }
 
@@ -238,4 +262,5 @@ func (c *AmiServer) CloseCons() {
 func (c *AmiServer) Close() {
 	c.CloseCons()
 	c.listener.Close()
+	c.cancel()
 }
