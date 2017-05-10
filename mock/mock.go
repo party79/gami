@@ -15,7 +15,20 @@ import (
 	"golang.org/x/net/context"
 )
 
+type AmiMocker struct {
+	super  *AmiMocker
+	action AmiAdvMockAction
+}
+
+func (mocker *AmiMocker) Call(conn *AmiConn, params textproto.MIMEHeader) textproto.MIMEHeader {
+	if mocker == nil {
+		return textproto.MIMEHeader{}
+	}
+	return mocker.action(conn, params, mocker.super)
+}
+
 type AmiMockAction func(conn *AmiConn, params textproto.MIMEHeader) textproto.MIMEHeader
+type AmiAdvMockAction func(conn *AmiConn, params textproto.MIMEHeader, super *AmiMocker) textproto.MIMEHeader
 
 //AmiConn for mocking Asterisk AMI
 type AmiConn struct {
@@ -94,7 +107,7 @@ func (conn *AmiConn) doReader() {
 		}
 		if err != nil {
 			errStr := err.Error()
-			if len(errStr) > 32 && errStr[len(errStr)-32:len(errStr)] == "use of closed network connection" {
+			if len(errStr) > 32 && errStr[len(errStr)-32:] == "use of closed network connection" {
 				break
 			}
 			log.Printf("Socket error: %v", err)
@@ -107,8 +120,8 @@ func (conn *AmiConn) doReader() {
 				"Response": {"Success"},
 				"ActionID": {packet.Get("Actionid")},
 			}
-		} else if cb, ok := conn.srv.getMock(action); ok {
-			conn.messageCh <- cb(conn, packet)
+		} else if mocker, ok := conn.srv.getMock(action); ok {
+			conn.messageCh <- mocker.Call(conn, packet)
 		} else {
 			conn.messageCh <- textproto.MIMEHeader{
 				"Response": {"TEST"},
@@ -149,7 +162,7 @@ type AmiServer struct {
 	context.Context
 	cancel        context.CancelFunc
 	Addr          string
-	actionsMocked map[string]AmiMockAction
+	actionsMocked map[string]*AmiMocker
 	listener      net.Listener
 	conns         []*AmiConn
 }
@@ -171,7 +184,7 @@ func NewAmiServer(ctx context.Context) *AmiServer {
 		cancel:        cancel,
 		Addr:          listener.Addr().String(),
 		listener:      listener,
-		actionsMocked: make(map[string]AmiMockAction),
+		actionsMocked: make(map[string]*AmiMocker),
 		conns:         make([]*AmiConn, 0),
 	}
 	go srv.do()
@@ -182,11 +195,30 @@ func NewAmiServer(ctx context.Context) *AmiServer {
 	return srv
 }
 
+//AdvMock: adds an action to mock with super support
+func (c *AmiServer) AdvMock(action string, cb AmiAdvMockAction) {
+	c.Lock()
+	defer c.Unlock()
+	mocker := &AmiMocker{action: cb}
+	if v, ok := c.actionsMocked[action]; ok {
+		mocker.super = v
+	}
+	c.actionsMocked[action] = mocker
+}
+
 //Mock: adds an action to mock
 func (c *AmiServer) Mock(action string, cb AmiMockAction) {
 	c.Lock()
 	defer c.Unlock()
-	c.actionsMocked[action] = cb
+	mocker := &AmiMocker{
+		action: func(conn *AmiConn, params textproto.MIMEHeader, super *AmiMocker) textproto.MIMEHeader {
+			return cb(conn, params)
+		},
+	}
+	if v, ok := c.actionsMocked[action]; ok {
+		mocker.super = v
+	}
+	c.actionsMocked[action] = mocker
 }
 
 //Unmock: removes an action from mocking
@@ -200,7 +232,7 @@ func (c *AmiServer) Unmock(action string) {
 func (c *AmiServer) Clear() {
 	c.Lock()
 	defer c.Unlock()
-	c.actionsMocked = make(map[string]AmiMockAction)
+	c.actionsMocked = make(map[string]*AmiMocker)
 }
 
 //Emit: emits packet to all connections
@@ -212,13 +244,13 @@ func (c *AmiServer) Emit(packet textproto.MIMEHeader) {
 	}
 }
 
-func (c *AmiServer) getMock(action string) (AmiMockAction, bool) {
+func (c *AmiServer) getMock(action string) (*AmiMocker, bool) {
 	c.RLock()
 	defer c.RUnlock()
-	if cb, ok := c.actionsMocked[action]; ok {
-		return cb, true
-	} else if cb, ok := c.actionsMocked["default"]; ok {
-		return cb, true
+	if mocker, ok := c.actionsMocked[action]; ok {
+		return mocker, true
+	} else if mocker, ok := c.actionsMocked["default"]; ok {
+		return mocker, true
 	}
 	return nil, false
 }
